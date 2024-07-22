@@ -5,7 +5,8 @@
 
 #define FLAGS "-std=c++17", "-pedantic", \
     "-Wall", "-Wextra", "-Wshadow", \
-    "-fno-exceptions", "-fno-rtti"
+    "-fno-exceptions", "-fno-rtti", \
+    "-Ibasic"
 
 #define CLIENT_FLAGS "--target=wasm32", \
     "-fno-builtin", "--no-standard-libraries", \
@@ -59,15 +60,15 @@ auto build_self() -> void {
 }
 
 auto build_client() -> void {
-    run_command("clang", FLAGS, CLIENT_FLAGS, "-o", "index.wasm", "client.cc");
+    run_command("clang", FLAGS, CLIENT_FLAGS, "-o", "res/index.wasm", "src/client.cc");
 }
 
 auto build_server() -> void {
-    run_command("cc", FLAGS, SERVER_FLAGS, "-o", "server", "server.cc");
+    run_command("cc", FLAGS, SERVER_FLAGS, "-o", "server", "src/server.cc");
 }
 
 auto clean() -> void {
-    run_command("rm", "index.wasm");
+    run_command("rm", "res/index.wasm");
     run_command("rm", "build");
     run_command("rm", "server");
 }

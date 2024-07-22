@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include <ws.h>
-#include "basic/basic.cc"
+#include <basic.cc>
 
 auto on_ws_open(ptr<ws_cli_conn_t> client) -> void {
     auto cli = ws_getaddress(client);

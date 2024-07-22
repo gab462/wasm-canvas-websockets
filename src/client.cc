@@ -1,4 +1,4 @@
-#include "basic/basic.cc"
+#include <basic.cc>
 #include "js.cc"
 
 struct State {
