@@ -1,3 +1,6 @@
 [submodule "basic"]
 	path = basic
-	url = git@github.com:gab462/basic
+	url = https://github.com/gab462/basic
+[submodule "wsServer"]
+	path = wsServer
+	url = https://github.com/Theldus/wsServer

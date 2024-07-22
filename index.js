@@ -35,7 +35,23 @@ async function main() {
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.stroke();
-            }
+            },
+            web_socket_client: (url) => {
+                let ws = new WebSocket(cstr(url));
+                let handle = makeHandle(ws);
+
+                ws.onopen = (event) => c.on_ws_open();
+                ws.onmessage = async (event) => {
+                    let buffer = new Uint8Array(c.memory.buffer, c.message_buffer.value, 128);
+                    let msg = new Uint8Array(await event.data.arrayBuffer());
+                    buffer.set(msg);
+                    c.on_ws_message();
+                };
+
+                return handle;
+            },
+            web_socket_close: (handle) => handles[handle].close(),
+            web_socket_send_bin: (handle, obj, len) => handles[handle].send(new Uint8Array(c.memory.buffer, obj, len)),
         }
     });
 

@@ -7,10 +7,13 @@
     "-Wall", "-Wextra", "-Wshadow", \
     "-fno-exceptions", "-fno-rtti"
 
-#define WASM_FLAGS "--target=wasm32", \
+#define CLIENT_FLAGS "--target=wasm32", \
     "-fno-builtin", "--no-standard-libraries", \
     "-Wl,--no-entry,--export-all,--allow-undefined", \
     "-Ibasic/wasm/stub"
+
+#define SERVER_FLAGS "-L./wsServer", "-lws", \
+    "-I./wsServer/include"
 
 auto absolute_path(ptr<Arena> arena, String file) -> String {
     assert(file.left(2) == "./"); // TODO: other cases
@@ -55,20 +58,18 @@ auto build_self() -> void {
     run_command("./build", "wasm");
 }
 
-auto build_wasm() -> void {
-    auto src = "main.cc";
-    auto bin = "index.wasm";
-
-    run_command("clang", FLAGS, WASM_FLAGS, "-o", bin, src);
+auto build_client() -> void {
+    run_command("clang", FLAGS, CLIENT_FLAGS, "-o", "index.wasm", "client.cc");
 }
 
-auto serve() -> void {
-    run_command("python3", "-m", "http.server");
+auto build_server() -> void {
+    run_command("cc", FLAGS, SERVER_FLAGS, "-o", "server", "server.cc");
 }
 
 auto clean() -> void {
     run_command("rm", "index.wasm");
     run_command("rm", "build");
+    run_command("rm", "server");
 }
 
 auto main(int argc, ptr<ptr<char>> argv) -> int {
@@ -76,12 +77,11 @@ auto main(int argc, ptr<ptr<char>> argv) -> int {
 
     if (type == "self")
         build_self();
-    else if (type == "serve")
-        serve();
     else if (type == "clean")
         clean();
     else {
-        build_wasm();
+        build_client();
+        build_server();
     }
 
     return 0;
