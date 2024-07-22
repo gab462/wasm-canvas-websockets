@@ -1,20 +1,20 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "basic/basic.cc"
+#include "lib/basic/basic.cc"
 
 #define FLAGS "-std=c++17", "-pedantic", \
     "-Wall", "-Wextra", "-Wshadow", \
     "-fno-exceptions", "-fno-rtti", \
-    "-Ibasic"
+    "-Ilib/basic"
 
 #define CLIENT_FLAGS "--target=wasm32", \
     "-fno-builtin", "--no-standard-libraries", \
     "-Wl,--no-entry,--export-all,--allow-undefined", \
-    "-Ibasic/wasm/stub"
+    "-Ilib/basic/wasm/stub"
 
-#define SERVER_FLAGS "-L./wsServer", "-lws", \
-    "-I./wsServer/include"
+#define SERVER_FLAGS "-Llib/wsServer", "-lws", \
+    "-Ilib/wsServer/include"
 
 auto absolute_path(ptr<Arena> arena, String file) -> String {
     assert(file.left(2) == "./"); // TODO: other cases
