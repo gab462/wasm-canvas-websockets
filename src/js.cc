@@ -81,8 +81,8 @@ namespace js {
         }
 
         template <typename T>
-        auto send(ptr<T> obj) -> void {
-            web_socket_send_bin(handle, static_cast<ptr<imm<char>>>(obj), sizeof(T));
+        auto send(T obj) -> void {
+            web_socket_send_bin(handle, reinterpret_cast<ptr<imm<char>>>(&obj), sizeof(T));
         }
 
         auto send_text(ptr<imm<char>> text) -> void {

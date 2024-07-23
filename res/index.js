@@ -42,10 +42,11 @@ async function main() {
 
                 ws.onopen = (event) => c.on_ws_open();
                 ws.onmessage = async (event) => {
-                    let buffer = new Uint8Array(c.memory.buffer, c.message_buffer.value, 128);
                     let msg = new Uint8Array(await event.data.arrayBuffer());
+                    let len = msg.byteLength;
+                    let addr = c.allocate_message(len);
+                    let buffer = new Uint8Array(c.memory.buffer, addr, len);
                     buffer.set(msg);
-                    c.on_ws_message();
                 };
 
                 return handle;

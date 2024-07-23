@@ -1,36 +1,64 @@
 #include <basic.cc>
 #include "js.cc"
+#include "common.cc"
 
-struct State {
-    u32 x;
-    u32 y;
-    u32 size;
-};
+static constexpr usize message_cap = 1024;
+Arena msgbuf;
+State state;
 
-State state{0, 0, 100};
 js::Canvas canvas;
 js::Context ctx;
 js::Web_Socket ws;
-static constexpr usize message_cap = 128;
-alignas(u64) char message_buffer[message_cap];
 
 extern "C" {
 
     auto init() -> void {
         canvas = js::Canvas::create("app");
-        canvas.set_width(800);
-        canvas.set_height(600);
+        canvas.set_width(canvas_width);
+        canvas.set_height(canvas_height);
         canvas.set_background_color("black");
 
         ctx = canvas.get_context("2d");
 
         ws = js::Web_Socket::create("ws://localhost:8080");
 
+        state = State{};
+
+        msgbuf = Arena::create(message_cap);
+
         println("ok");
     }
 
-    auto update(int timestamp) -> void {
-        (void) timestamp;
+    auto update(f32 timestamp) -> void {
+        static f32 previous = 0;
+        f32 dt = timestamp - previous;
+        defer set_previous = [timestamp](){ previous = timestamp; };
+
+        state.update(dt);
+
+        usize processed = 0;
+        while (processed < msgbuf.position) {
+            auto data = static_cast<ptr<u8>>(msgbuf.memory) + processed;
+            Message msg = Message::get(data);
+
+            if (msg.type == Message::Type::moving) {
+                auto moving = Moving_Message::get(data);
+
+                state.direction = moving.direction;
+            } else if (msg.type == Message::Type::init) {
+                auto init = Init_Message::get(data);
+
+                state = State::create(init.x, init.y, init.hue);
+            } else {
+                assert(false);
+            }
+
+            processed += msg.length;
+        }
+
+        // Reset arena
+        msgbuf.destroy();
+        msgbuf = Arena::create(message_cap);
     }
 
     auto render() -> void {
@@ -43,16 +71,16 @@ extern "C" {
     auto key_down(char c) -> void {
         switch (c) {
         case 'w':
-            state.y -= state.size;
+            ws.send(Moving_Message::create(State::Moving::up));
             break;
         case 'a':
-            state.x -= state.size;
+            ws.send(Moving_Message::create(State::Moving::left));
             break;
         case 's':
-            state.y += state.size;
+            ws.send(Moving_Message::create(State::Moving::down));
             break;
         case 'd':
-            state.x += state.size;
+            ws.send(Moving_Message::create(State::Moving::right));
             break;
         }
     }
@@ -72,12 +100,11 @@ extern "C" {
     }
 
     auto on_ws_open() -> void {
-        ws.send_text("Hello from client");
+        ws.send(Joined_Message::create());
     }
 
-    auto on_ws_message() -> void {
-        println("Received message from server:");
-        println(static_cast<ptr<imm<char>>>(message_buffer));
+    auto allocate_message(usize n) -> ptr<u8> {
+        return msgbuf.allocate<u8>(n);
     }
 
 }
