@@ -59,6 +59,10 @@ auto connection_id(ptr<ws_cli_conn_t> connection) -> u32 {
     return -1;
 }
 
+auto random_float() -> f32 {
+    return rand() / static_cast<f32>(RAND_MAX);
+}
+
 template <typename T>
 auto ws_send(ptr<ws_cli_conn_t> client, T obj) -> void {
     ws_sendframe_bin(client, reinterpret_cast<ptr<char>>(&obj), sizeof(T));
@@ -87,7 +91,7 @@ auto on_ws_close(ptr<ws_cli_conn_t> client) -> void {
 
     ws_send_all(Left_Message::create(id));
 
-    println("Connection closed, addr: %s", cli);
+    println("Connection closed, addr: %s, id: %d", cli, id);
 }
 
 auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 type) -> void {
@@ -99,25 +103,36 @@ auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 ty
     if (size != metadata.length)
         ws_close_client(client);
 
-    if (metadata.type == Message::Type::join) {
-        //auto join = Join_Message::get(msg);
+    switch (metadata.type) {
+        case Message::Type::join: {
+            //auto join = Join_Message::get(msg);
 
-        // FIXME: batch
-        for (auto p: players) {
-            ws_send(client, Joined_Message::create(p.state, false));
-        }
+            if (inactive_players.tail == 0 && players.tail == player_cap)
+                ws_close_client(client); // No space left for new player
 
-        auto player = State::create(make_id(), 0.f, 0.f, 1.f); // TODO: random
+            // TODO: batch
+            for (auto& p: players) {
+                ws_send(client, Joined_Message::create(p.state, false));
+            }
 
-        players[player.id] = Client::create(client, player);
+            auto player = State::create(make_id(), random_float() * canvas_width, random_float() * canvas_height, random_float());
 
-        ws_send_all(Joined_Message::create(player, true));
-    } else if (metadata.type == Message::Type::moving) {
-        auto moving = Moving_Message::get(msg);
+            players[player.id] = Client::create(client, player);
 
-        players[moving.id].state.direction = moving.direction;
+            println("joined message id: %d", Joined_Message::create(player, true).player.id);
+            ws_send_all(Joined_Message::create(player, true));
 
-        ws_send_all(Moving_Message::create(moving.id, moving.direction));
+            println("Player joined, id: %d", player.id);
+        } break;
+        case Message::Type::moving: {
+            auto moving = Moving_Message::get(msg);
+
+            players[moving.id].state.direction = moving.direction;
+
+            ws_send_all(Moving_Message::create(moving.id, moving.direction));
+        } break;
+        default:
+            assert(false);
     }
 }
 

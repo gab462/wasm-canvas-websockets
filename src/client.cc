@@ -51,13 +51,16 @@ extern "C" {
                 case Message::Type::joined: {
                     auto joined = Joined_Message::get(data);
 
-                    if (players.tail >= joined.player.id) {
-                        players.append(joined.player);
-                    } else {
+                    if (players.tail > joined.player.id) {
                         players[joined.player.id] = joined.player;
+
+                        if (id > 0 && joined.is_new == true)
+                            inactive_players.pop();
+                    } else {
+                        players.append(joined.player);
                     }
 
-                    if (id == -1 && joined.is_new == true) {
+                    if (joined.is_new && id == -1) {
                         id = joined.player.id;
                     }
                 } break;
@@ -80,10 +83,10 @@ extern "C" {
 
     auto render() -> void {
         ctx.clear();
-        ctx.set_stroke_style("red");
 
         for (auto& player: players) {
             if (is_active(player.id)) {
+                ctx.set_stroke_hue(player.hue);
                 ctx.stroke_rect(player.x, player.y, player.size, player.size);
                 ctx.stroke_line(player.x, player.y, player.x + player.size, player.y + player.size);
             }

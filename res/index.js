@@ -27,6 +27,7 @@ async function main() {
             canvas_get_context: (handle, ctx) => makeHandle(handles[handle].getContext(cstr(ctx))),
             context_clear: (handle) => handles[handle].clearRect(0, 0, handles[handle].canvas.width, handles[handle].canvas.height),
             context_set_stroke_style: (handle, style) => handles[handle].strokeStyle = cstr(style),
+            context_set_stroke_hue: (handle, hue) => handles[handle].strokeStyle = `hsl(${hue*360} 70 40)`,
             context_stroke_rect: (handle, x, y, w, h) => handles[handle].strokeRect(x, y, w, h),
             context_stroke_line: (handle, x1, y1, x2, y2) => {
                 let ctx = handles[handle];

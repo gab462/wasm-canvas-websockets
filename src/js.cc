@@ -10,6 +10,7 @@ namespace js {
         auto canvas_get_context(usize handle, ptr<imm<char>> context) -> usize;
         auto context_clear(usize handle) -> void;
         auto context_set_stroke_style(usize handle, ptr<imm<char>> style) -> void;
+        auto context_set_stroke_hue(usize handle, f32 hue) -> void;
         auto context_stroke_rect(usize handle, u32 x, u32 y, u32 w, u32 h) -> void;
         auto context_stroke_line(usize handle, u32 x1, u32 y1, u32 x2, u32 y2) -> void;
         auto web_socket_client(ptr<imm<char>> url) -> usize;
@@ -26,6 +27,10 @@ namespace js {
 
         auto set_stroke_style(ptr<imm<char>> style) -> void {
             context_set_stroke_style(handle, style);
+        }
+
+        auto set_stroke_hue(f32 hue) -> void {
+            context_set_stroke_hue(handle, hue);
         }
 
         auto stroke_rect(u32 x, u32 y, u32 w, u32 h) -> void {
