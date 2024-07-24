@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <ws.h>
 #include <basic.cc>
+#include <sys/time.h>
 #include "common.cc"
 
 struct Mutex {
@@ -32,6 +33,29 @@ struct Client {
 
     static auto create(ptr<ws_cli_conn_t> connection, State state) -> Client {
         return { connection, state };
+    }
+};
+
+struct Timer {
+    timeval tv_start;
+
+    auto start() -> void {
+        gettimeofday(&tv_start, NULL);
+    }
+
+    auto end() -> f64 {
+        timeval tv_end;
+
+        gettimeofday(&tv_end, NULL);
+
+        u32 start = tv_start.tv_usec;
+        u32 end = tv_end.tv_usec;
+
+        if (start < end) {
+            return start - end;
+        } else {
+            return (start - (end + 1000000));
+        }
     }
 };
 
@@ -140,15 +164,19 @@ auto main() -> int {
     ws_server server{ "localhost", 8080, 1, 1000, { on_ws_open, on_ws_close, on_ws_message } };
     ws_socket(&server);
 
+    Timer timer;
+
     while (1) {
-        double fps = 60.0;
-        double dt = 1000.0 / fps; // TODO: measure
+        static constexpr double fps = 60.0;
+        static constexpr double dt = 1000000.0 / fps;
+
+        timer.start();
 
         for (auto& p: players) {
             p.state.update(dt);
         }
 
-        usleep(dt * 1000.0);
+        usleep(dt - timer.end());
     }
 
     return 0;
