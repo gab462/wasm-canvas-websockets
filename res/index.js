@@ -41,6 +41,7 @@ async function main() {
                 let handle = makeHandle(ws);
 
                 ws.onopen = (event) => c.on_ws_open();
+                ws.onclose = (event) => c.on_ws_close();
                 ws.onmessage = async (event) => {
                     let msg = new Uint8Array(await event.data.arrayBuffer());
                     let len = msg.byteLength;
