@@ -119,7 +119,7 @@ struct Moving_Message {
     }
 };
 
-static constexpr usize player_cap = 64;
+static constexpr usize player_cap = 16;
 Stack<u32, player_cap> inactive_players{};
 
 auto is_active(u32 id) -> bool {
