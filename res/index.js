@@ -41,10 +41,14 @@ async function main() {
                 let ws = new WebSocket(cstr(url));
                 let handle = makeHandle(ws);
 
+                ws.binaryType = "arraybuffer";
+
                 ws.onopen = (event) => c.on_ws_open();
                 ws.onclose = (event) => c.on_ws_close();
-                ws.onmessage = async (event) => {
-                    let msg = new Uint8Array(await event.data.arrayBuffer());
+                ws.onmessage = (event) => {
+                    console.log(event.data);
+                    let msg = new Uint8Array(event.data);
+                    console.log(msg);
                     let len = msg.byteLength;
                     let addr = c.allocate_message(len);
                     let buffer = new Uint8Array(c.memory.buffer, addr, len);
