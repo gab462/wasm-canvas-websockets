@@ -21,9 +21,9 @@ extern "C" {
 
         ctx = canvas.get_context("2d");
 
-        ws = js::Web_Socket::create("ws://localhost:8080");
-
         msgbuf = Arena::create(message_cap);
+
+        ws = js::Web_Socket::create("ws://localhost:8080");
     }
 
     auto update(f32 timestamp) -> void {
@@ -54,7 +54,7 @@ extern "C" {
                     if (players.tail > joined.player.id) {
                         players[joined.player.id] = joined.player;
 
-                        if (id > 0 && joined.is_new == true)
+                        if (id >= 0 && joined.is_new == true)
                             inactive_players.pop();
                     } else {
                         players.append(joined.player);
