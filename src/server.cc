@@ -119,7 +119,7 @@ auto on_ws_close(ptr<ws_cli_conn_t> client) -> void {
 }
 
 auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 type) -> void {
-    if (type != WS_FR_OP_BIN) {
+    if (type != WS_FR_OP_BIN || size < sizeof(Message)) {
         ws_close_client(client);
         return;
     }
