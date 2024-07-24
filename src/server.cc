@@ -148,7 +148,7 @@ auto main() -> int {
             p.state.update(dt);
         }
 
-        usleep(dt);
+        usleep(dt * 1000.0);
     }
 
     return 0;
