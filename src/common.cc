@@ -58,6 +58,7 @@ auto get_unaligned(ptr<imm<u8>> unaligned) -> T {
 struct Message {
     enum Type: u32 { join, joined, left, moving };
 
+    u32 magic;
     Type type;
     u32 length;
 
@@ -70,7 +71,7 @@ struct Join_Message {
     Message metadata;
 
     static auto create() -> Join_Message {
-        return { { Message::Type::join, sizeof(Join_Message) } };
+        return { { 0xC0FFEE, Message::Type::join, sizeof(Join_Message) } };
     }
 
     static auto get(ptr<imm<u8>> unaligned) -> Join_Message {
@@ -84,7 +85,7 @@ struct Joined_Message {
     bool is_new;
 
     static auto create(State player, bool is_new) -> Joined_Message {
-        return { { Message::Type::joined, sizeof(Joined_Message) }, player, is_new };
+        return { { 0xC0FFEE, Message::Type::joined, sizeof(Joined_Message) }, player, is_new };
     }
 
     static auto get(ptr<imm<u8>> unaligned) -> Joined_Message {
@@ -97,7 +98,7 @@ struct Left_Message {
     u32 id;
 
     static auto create(u32 id) -> Left_Message {
-        return { { Message::Type::left, sizeof(Left_Message) }, id };
+        return { { 0xC0FFEE, Message::Type::left, sizeof(Left_Message) }, id };
     }
 
     static auto get(ptr<imm<u8>> unaligned) -> Left_Message {
@@ -111,7 +112,7 @@ struct Moving_Message {
     State::Moving direction;
 
     static auto create(u32 id, State::Moving direction) -> Moving_Message {
-        return { { Message::Type::moving, sizeof(Moving_Message) }, id, direction };
+        return { { 0xC0FFEE, Message::Type::moving, sizeof(Moving_Message) }, id, direction };
     }
 
     static auto get(ptr<imm<u8>> unaligned) -> Moving_Message {

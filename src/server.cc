@@ -119,20 +119,26 @@ auto on_ws_close(ptr<ws_cli_conn_t> client) -> void {
 }
 
 auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 type) -> void {
-    if (type != WS_FR_OP_BIN)
+    if (type != WS_FR_OP_BIN) {
         ws_close_client(client);
+        return;
+    }
 
     auto metadata = Message::get(msg);
 
-    if (size != metadata.length)
+    if (metadata.length != size  || metadata.magic != 0xC0FFEE) {
         ws_close_client(client);
+        return;
+    }
 
     switch (metadata.type) {
         case Message::Type::join: {
             //auto join = Join_Message::get(msg);
 
-            if (inactive_players.tail == 0 && players.tail == player_cap)
+            if (inactive_players.tail == 0 && players.tail == player_cap) {
                 ws_close_client(client); // No space left for new player
+                return;
+            }
 
             // TODO: batch
             for (auto& p: players) {
