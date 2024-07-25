@@ -32,7 +32,7 @@ extern "C" {
         defer set_previous = [timestamp](){ previous = timestamp; };
 
         for (auto& player: players) {
-            if (is_active(player.id)) {
+            if (player.active) {
                 player.update(dt);
             }
         }
@@ -53,9 +53,6 @@ extern "C" {
 
                     if (players.tail > joined.player.id) {
                         players[joined.player.id] = joined.player;
-
-                        if (id >= 0 && joined.is_new == true)
-                            inactive_players.pop();
                     } else {
                         players.append(joined.player);
                     }
@@ -67,7 +64,7 @@ extern "C" {
                 case Message::Type::left: {
                     auto left = Left_Message::get(data);
 
-                    inactive_players.push(left.id);
+                    players[left.id].active = false;
                 } break;
                 default:
                     assert(false);
@@ -85,7 +82,7 @@ extern "C" {
         ctx.clear();
 
         for (auto& player: players) {
-            if (is_active(player.id)) {
+            if (player.active) {
                 ctx.set_stroke_hue(player.hue);
                 ctx.stroke_rect(player.x, player.y, player.size, player.size);
                 ctx.stroke_line(player.x, player.y, player.x + player.size, player.y + player.size);

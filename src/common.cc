@@ -2,17 +2,18 @@ static constexpr usize canvas_width = 800;
 static constexpr usize canvas_height = 600;
 
 struct State {
-    enum Moving: u32 { none, up, down, left, right };
+    enum Moving: u8 { none, up, down, left, right };
 
-    u32 id;
+    bool active;
+    u8 id;
+    Moving direction;
+    u8 size;
     f32 x;
     f32 y;
-    u32 size;
-    Moving direction;
     f32 hue;
 
-    static auto create(u32 id, f32 x, f32 y, f32 hue) -> State {
-        return { id, x, y, 50, Moving::none, hue };
+    static auto create(u8 id, f32 x, f32 y, f32 hue) -> State {
+        return { true, id, Moving::none, 50, x, y, hue };
     }
 
     static auto wrap(f32 val, f32 max) -> f32 {
@@ -121,13 +122,3 @@ struct Moving_Message {
 };
 
 static constexpr usize player_cap = 16;
-Stack<u32, player_cap> inactive_players{};
-
-auto is_active(u32 id) -> bool {
-    for (auto inactive: inactive_players) {
-        if (id == inactive)
-            return false;
-    }
-
-    return true;
-}

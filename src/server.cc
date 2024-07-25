@@ -60,17 +60,19 @@ struct Timer {
 };
 
 Array<Client, player_cap> players{};
-Mutex id_mutex;
+Mutex id_mutex = Mutex::create();
 
 auto make_id() -> u32 {
     id_mutex.lock();
     defer unlock = [](){ id_mutex.unlock(); };
 
-    if (inactive_players.size() > 0) {
-        return inactive_players.pop();
-    } else {
-        return players.tail++;
+    for (auto& p: players) {
+        if (!p.state.active) {
+            return p.state.id;
+        }
     }
+
+    return players.tail++;
 }
 
 auto connection_id(ptr<ws_cli_conn_t> connection) -> u32 {
@@ -95,7 +97,7 @@ auto ws_send(ptr<ws_cli_conn_t> client, T obj) -> void {
 template <typename T>
 auto ws_send_all(T obj) -> void {
     for (auto& client: players) {
-        if (is_active(client.state.id))
+        if (client.state.active)
             ws_sendframe_bin(client.connection, reinterpret_cast<ptr<char>>(&obj), sizeof(T));
     }
 }
@@ -111,7 +113,7 @@ auto on_ws_close(ptr<ws_cli_conn_t> client) -> void {
 
     auto id = connection_id(client);
 
-    inactive_players.push(id);
+    players[id].state.active = false;
 
     ws_send_all(Left_Message::create(id));
 
@@ -135,10 +137,11 @@ auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 ty
         case Message::Type::join: {
             //auto join = Join_Message::get(msg);
 
-            if (inactive_players.tail == 0 && players.tail == player_cap) {
-                ws_close_client(client); // No space left for new player
-                return;
-            }
+            // TODO:
+            //if (inactive_players == 0 && players.tail == player_cap) {
+            //    ws_close_client(client); // No space left for new player
+            //    return;
+            //}
 
             // TODO: batch
             for (auto& p: players) {
@@ -149,10 +152,7 @@ auto on_ws_message(ptr<ws_cli_conn_t> client, ptr<imm<u8>> msg, u64 size, i32 ty
 
             players[player.id] = Client::create(client, player);
 
-            println("joined message id: %d", Joined_Message::create(player, true).player.id);
             ws_send_all(Joined_Message::create(player, true));
-
-            println("Player joined, id: %d", player.id);
         } break;
         case Message::Type::moving: {
             auto moving = Moving_Message::get(msg);
@@ -170,6 +170,8 @@ auto main() -> int {
     ws_server server{ "localhost", 8080, 1, 1000, { on_ws_open, on_ws_close, on_ws_message } };
     ws_socket(&server);
 
+    defer cleanup = [](){ id_mutex.destroy(); };
+
     Timer timer;
 
     while (1) {
@@ -179,7 +181,8 @@ auto main() -> int {
         timer.start();
 
         for (auto& p: players) {
-            p.state.update(dt);
+            if(p.state.active)
+                p.state.update(dt/1000.0); // msec
         }
 
         usleep(dt - timer.end());
