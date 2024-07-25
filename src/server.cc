@@ -48,14 +48,10 @@ struct Timer {
 
         gettimeofday(&tv_end, NULL);
 
-        u32 start = tv_start.tv_usec;
-        u32 end = tv_end.tv_usec;
+        u64 start = tv_start.tv_sec * 1000000 + tv_start.tv_usec;
+        u64 end = tv_end.tv_sec * 1000000 + tv_end.tv_usec;
 
-        if (start < end) {
-            return start - end;
-        } else {
-            return (start - (end + 1000000));
-        }
+        return end - start;
     }
 };
 
