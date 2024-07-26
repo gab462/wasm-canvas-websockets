@@ -58,7 +58,7 @@ struct Timer {
 Array<Client, player_cap> players{};
 Mutex id_mutex = Mutex::create();
 
-auto make_id() -> u32 {
+auto make_id() -> u8 {
     id_mutex.lock();
     defer unlock = [](){ id_mutex.unlock(); };
 
@@ -71,7 +71,7 @@ auto make_id() -> u32 {
     return players.tail++;
 }
 
-auto connection_id(ptr<ws_cli_conn_t> connection) -> u32 {
+auto connection_id(ptr<ws_cli_conn_t> connection) -> u8 {
     for (auto& client: players) {
         if (connection == client.connection) {
             return client.state.id;
